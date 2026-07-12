@@ -1,15 +1,5 @@
-import {
-  pgTable,
-  varchar,
-  uuid,
-  timestamp,
-  text,
-  pgEnum,
-} from 'drizzle-orm/pg-core';
-
-export const roleEnum = pgEnum('role', ['customer', 'admin']);
-
-export const statusEnum = pgEnum('status', ['active', 'suspended', 'deleted']);
+import { pgTable, varchar, uuid, timestamp, text } from 'drizzle-orm/pg-core';
+import { statusEnum, roleEnum } from './enums';
 
 export const usersTable = pgTable('users', {
   id: uuid().primaryKey().defaultRandom(),
