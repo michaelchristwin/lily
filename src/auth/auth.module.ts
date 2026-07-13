@@ -5,9 +5,15 @@ import { DatabaseModule } from '../database/database.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [DatabaseModule, PassportModule, JwtModule.register({})],
+  imports: [
+    DatabaseModule,
+    PassportModule,
+    JwtModule.register({}),
+    UsersModule,
+  ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
 })

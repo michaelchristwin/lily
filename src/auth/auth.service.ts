@@ -5,16 +5,16 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-
 import { SignUpDto } from './dto/sign-up.dto';
 import { usersTable } from '../database/schema';
 import { eq } from 'drizzle-orm';
 import argon2 from 'argon2';
 import { SignInDto } from './dto/sign-in.dto';
-import { UpdateUserDto } from './dto/update-use.dto';
 import { type DrizzleDB, DRIZZLE } from '../database/database.provider';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './types/jwt-payload';
+import { UpdateUserDto } from '../users/dto/update-user.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +22,7 @@ export class AuthService {
     @Inject(DRIZZLE)
     private readonly db: DrizzleDB,
     private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
   ) {}
 
   async signUp(dto: SignUpDto) {
@@ -83,9 +84,7 @@ export class AuthService {
   }
 
   async findById(id: string) {
-    const user = await this.db.query.usersTable.findFirst({
-      where: { id: id },
-    });
+    const user = await this.usersService.findById(id);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -95,11 +94,7 @@ export class AuthService {
   }
 
   async updateUser(id: string, dto: UpdateUserDto) {
-    const [user] = await this.db
-      .update(usersTable)
-      .set(dto)
-      .where(eq(usersTable.id, id))
-      .returning();
+    const user = await this.usersService.update(id, dto);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -109,15 +104,7 @@ export class AuthService {
   }
 
   async deleteUser(id: string) {
-    const [user] = await this.db
-      .delete(usersTable)
-      .where(eq(usersTable.id, id))
-      .returning();
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
+    await this.usersService.remove(id);
     return {
       message: 'User deleted',
     };
