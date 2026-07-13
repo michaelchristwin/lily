@@ -1,21 +1,28 @@
 import {
   ConflictException,
   Injectable,
+  Inject,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { relations } from '../database/schema/relations';
+
 import { SignUpDto } from './dto/sign-up.dto';
 import { usersTable } from '../database/schema';
 import { eq } from 'drizzle-orm';
 import argon2 from 'argon2';
 import { SignInDto } from './dto/sign-in.dto';
 import { UpdateUserDto } from './dto/update-use.dto';
+import { type DrizzleDB, DRIZZLE } from '../database/database.provider';
+import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from './types/jwt-payload';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly db: PostgresJsDatabase<typeof relations>) {}
+  constructor(
+    @Inject(DRIZZLE)
+    private readonly db: DrizzleDB,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async signUp(dto: SignUpDto) {
     const existing = await this.db
@@ -39,8 +46,13 @@ export class AuthService {
       .returning();
 
     // TODO: Generate JWT
-
-    return user;
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
+    const accessToken = await this.jwtService.signAsync(payload);
+    return { accessToken, user };
   }
 
   async signIn(dto: SignInDto) {
@@ -61,8 +73,13 @@ export class AuthService {
     }
 
     // TODO: Generate JWT
-
-    return user;
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
+    const accessToken = await this.jwtService.signAsync(payload);
+    return { accessToken, user };
   }
 
   async findById(id: string) {
